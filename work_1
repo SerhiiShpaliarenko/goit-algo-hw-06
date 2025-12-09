@@ -1,0 +1,69 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# 1. Створення порожнього графа
+G = nx.Graph()
+
+# 2. Додавання даних (Моделюємо 3 лінії метро з пересадками)
+
+# Список станцій для кожної лінії
+red_line = ["Академмістечко", "Житомирська", "Вокзальна", "Театральна", "Хрещатик", "Арсенальна", "Лісова"]
+blue_line = ["Героїв Дніпра", "Почайна", "Майдан Незалежності", "Площа Українських Героїв", "Либідська", "Теремки"]
+green_line = ["Сирець", "Золоті Ворота", "Палац Спорту", "Осокорки", "Червоний Хутір"]
+
+# Функція для додавання шляху (послідовних ребер)
+def add_line_edges(graph, stations):
+    for i in range(len(stations) - 1):
+        graph.add_edge(stations[i], stations[i+1], weight=2) # weight=2 (час проїзду)
+
+# Додаємо лінії в граф
+add_line_edges(G, red_line)
+add_line_edges(G, blue_line)
+add_line_edges(G, green_line)
+
+# Додаємо пересадочні вузли (ребра між лініями)
+transfers = [
+    ("Театральна", "Золоті Ворота"),      # Червона <-> Зелена
+    ("Хрещатик", "Майдан Незалежності"),  # Червона <-> Синя
+    ("Площа Українських Героїв", "Палац Спорту") # Синя <-> Зелена
+]
+G.add_edges_from(transfers, weight=5) # Пересадка довша за перегін
+
+# 3. Візуалізація графа
+plt.figure(figsize=(10, 8))
+
+# Визначаємо позиції вершин (layout)
+pos = nx.spring_layout(G, seed=42) 
+
+# Малюємо граф
+nx.draw_networkx_nodes(G, pos, node_size=700, node_color='lightblue')
+nx.draw_networkx_edges(G, pos, width=2, edge_color='gray')
+nx.draw_networkx_labels(G, pos, font_size=10, font_family="sans-serif")
+
+plt.title("Модель транспортної мережі (Метро)", fontsize=15)
+plt.axis("off")
+plt.show()
+
+# 4. Аналіз основних характеристик
+print(f"{'-'*10} Аналіз графа {'-'*10}")
+
+# Кількість вершин та ребер
+num_nodes = G.number_of_nodes()
+num_edges = G.number_of_edges()
+
+print(f"Кількість станцій (вершин): {num_nodes}")
+print(f"Кількість перегонів (ребер): {num_edges}")
+print(f"\nСтупінь вершин (кількість з'єднань):")
+
+# Розрахунок ступеня вершин
+degrees = dict(G.degree())
+for node, degree in degrees.items():
+    print(f"{node}: {degree}")
+
+# Знаходимо найважливіші вузли (станції з найбільшою кількістю зв'язків)
+max_degree = max(degrees.values())
+hubs = [node for node, degree in degrees.items() if degree == max_degree]
+
+print(f"\n{'-'*10} Висновки {'-'*10}")
+print(f"Середній ступінь вершини: {sum(degrees.values()) / num_nodes:.2f}")
+print(f"Транспортні вузли (найбільша кількість зв'язків - {max_degree}): {', '.join(hubs)}")
