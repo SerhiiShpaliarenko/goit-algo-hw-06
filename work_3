@@ -1,0 +1,78 @@
+import networkx as nx
+
+def create_weighted_metro_graph():
+    G = nx.Graph()
+    
+    # 1. Визначаємо станції
+    red_line = ["Академмістечко", "Житомирська", "Берестейська", "Вокзальна", "Театральна", "Хрещатик", "Арсенальна", "Дніпро", "Гідропарк", "Лісова"]
+    blue_line = ["Героїв Дніпра", "Почайна", "Тараса Шевченка", "Майдан Незалежності", "Площа Українських Героїв", "Олімпійська", "Либідська", "Теремки"]
+    green_line = ["Сирець", "Лук'янівська", "Золоті Ворота", "Палац Спорту", "Кловська", "Осокорки", "Червоний Хутір"]
+
+    # 2. Додаємо ребра з ВАГАМИ (weight)
+    # Припустимо, час проїзду між станціями - 2 хвилини
+    
+    for i in range(len(red_line) - 1):
+        G.add_edge(red_line[i], red_line[i+1], weight=2)
+    
+    for i in range(len(blue_line) - 1):
+        G.add_edge(blue_line[i], blue_line[i+1], weight=2)
+        
+    for i in range(len(green_line) - 1):
+        G.add_edge(green_line[i], green_line[i+1], weight=2)
+
+    # 3. Додаємо пересадки з більшою вагою
+    # Припустимо, пересадка займає 5 хвилин
+    transfers = [
+        ("Театральна", "Золоті Ворота"),
+        ("Хрещатик", "Майдан Незалежності"),
+        ("Площа Українських Героїв", "Палац Спорту")
+    ]
+    # Додаємо ці ребра з вагою 5
+    G.add_edges_from(transfers, weight=5)
+    
+    return G
+
+def dijkstra_search(graph, start, end):
+    """
+    Знаходить найкоротший шлях та його довжину за алгоритмом Дейкстри.
+    """
+    try:
+        # networkx має вбудовану реалізацію Дейкстри
+        # weight='weight' вказує, що треба враховувати атрибут ваги ребра
+        length = nx.dijkstra_path_length(graph, start, end, weight='weight')
+        path = nx.dijkstra_path(graph, start, end, weight='weight')
+        return path, length
+    except nx.NetworkXNoPath:
+        return None, float('inf')
+
+def main():
+    # Створюємо граф з вагами
+    G = create_weighted_metro_graph()
+    
+    print(f"{'-'*10} Алгоритм Дейкстри {'-'*10}\n")
+    
+    # Завдання A: Знайти шлях між конкретними точками (наприклад, Лісова -> Теремки)
+    start = "Лісова"
+    end = "Теремки"
+    
+    path, time = dijkstra_search(G, start, end)
+    print(f"Найкоротший шлях від {start} до {end}:")
+    print(f"Маршрут: {path}")
+    print(f"Загальний час: {time} хв\n")
+    
+    print(f"{'-'*10} Найкоротші шляхи до всіх станцій {'-'*10}")
+    
+    # Завдання B: Знайти шляхи між ВСІМА вершинами
+    # (Виведемо шляхи від 'Вокзальна' до всіх інших як приклад, 
+    # бо виводити матрицю 25x25 в консоль буде нечитабельно)
+    
+    source_node = "Вокзальна"
+    # single_source_dijkstra повертає два словники: (довжини, шляхи)
+    lengths, paths = nx.single_source_dijkstra(G, source=source_node, weight='weight')
+    
+    print(f"\nЧас поїздки від станції '{source_node}':")
+    for station, travel_time in lengths.items():
+        print(f" -> до {station:<25}: {travel_time} хв")
+
+if __name__ == "__main__":
+    main()
