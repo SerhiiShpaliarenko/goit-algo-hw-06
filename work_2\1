@@ -1,0 +1,76 @@
+import networkx as nx
+
+def create_metro_graph():
+    G = nx.Graph()
+    # Станції та зв'язки (той самий граф, що і раніше)
+    red_line = ["Академмістечко", "Житомирська", "Берестейська", "Вокзальна", "Театральна", "Хрещатик", "Арсенальна", "Дніпро", "Гідропарк", "Лісова"]
+    blue_line = ["Героїв Дніпра", "Почайна", "Тараса Шевченка", "Майдан Незалежності", "Площа Українських Героїв", "Олімпійська", "Либідська", "Теремки"]
+    green_line = ["Сирець", "Лук'янівська", "Золоті Ворота", "Палац Спорту", "Кловська", "Осокорки", "Червоний Хутір"]
+
+    for i in range(len(red_line) - 1): G.add_edge(red_line[i], red_line[i+1])
+    for i in range(len(blue_line) - 1): G.add_edge(blue_line[i], blue_line[i+1])
+    for i in range(len(green_line) - 1): G.add_edge(green_line[i], green_line[i+1])
+
+    transfers = [
+        ("Театральна", "Золоті Ворота"),
+        ("Хрещатик", "Майдан Незалежності"),
+        ("Площа Українських Героїв", "Палац Спорту")
+    ]
+    G.add_edges_from(transfers)
+    return G
+
+# --- Реалізація алгоритмів ---
+
+def dfs_path(graph, start, goal):
+    """
+    Реалізація пошуку в глибину (DFS) за допомогою стеку.
+    """
+    stack = [(start, [start])]  # Стек зберігає кортежі (поточна_вершина, шлях_до_неї)
+    visited = set()  # Множина відвіданих вершин
+
+    while stack:
+        (vertex, path) = stack.pop()  # Беремо останній доданий елемент (LIFO)
+        
+        if vertex not in visited:
+            if vertex == goal:
+                return path  # Знайшли ціль - повертаємо шлях
+            
+            visited.add(vertex)
+            
+            # Додаємо сусідів у стек
+            # graph[vertex] повертає сусідів. Ми перетворюємо на список, щоб додати в стек.
+            for neighbor in list(graph[vertex]):
+                if neighbor not in visited:
+                    stack.append((neighbor, path + [neighbor]))
+    return None
+
+def bfs_path(graph, start, goal):
+    """
+    Пошук в ширину (BFS).
+    У networkx функція shortest_path для незважених графів використовує саме BFS.
+    """
+    try:
+        return nx.shortest_path(graph, source=start, target=goal)
+    except nx.NetworkXNoPath:
+        return None
+
+# --- Головна частина ---
+
+def main():
+    G = create_metro_graph()
+    
+    start_station = "Лісова"
+    end_station = "Теремки"
+
+    print(f"--- Пошук шляху: {start_station} -> {end_station} ---\n")
+
+    # DFS
+    dfs_result = dfs_path(G, start_station, end_station)
+    print(f"DFS (шлях у глибину): {dfs_result}")
+    
+    # BFS
+    bfs_result = bfs_path(G, start_station, end_station)
+    print(f"BFS (шлях у ширину):  {bfs_result}")
+
+if __name__ == "__main__":
+    main()
