@@ -1,0 +1,79 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# --- 1. Створення Графа (як і раніше) ---
+def create_metro_graph():
+    G = nx.Graph()
+    red_line = ["Академмістечко", "Житомирська", "Берестейська", "Вокзальна", "Театральна", "Хрещатик", "Арсенальна", "Дніпро", "Гідропарк", "Лісова"]
+    blue_line = ["Героїв Дніпра", "Почайна", "Тараса Шевченка", "Майдан Незалежності", "Площа Українських Героїв", "Олімпійська", "Либідська", "Теремки"]
+    green_line = ["Сирець", "Лук'янівська", "Золоті Ворота", "Палац Спорту", "Кловська", "Осокорки", "Червоний Хутір"]
+
+    for i in range(len(red_line) - 1): G.add_edge(red_line[i], red_line[i+1])
+    for i in range(len(blue_line) - 1): G.add_edge(blue_line[i], blue_line[i+1])
+    for i in range(len(green_line) - 1): G.add_edge(green_line[i], green_line[i+1])
+
+    transfers = [
+        ("Театральна", "Золоті Ворота"),
+        ("Хрещатик", "Майдан Незалежності"),
+        ("Площа Українських Героїв", "Палац Спорту")
+    ]
+    G.add_edges_from(transfers)
+    return G
+
+# --- 2. Алгоритми пошуку ---
+def dfs_path(graph, start, goal):
+    stack = [(start, [start])]
+    visited = set()
+    while stack:
+        (vertex, path) = stack.pop()
+        if vertex not in visited:
+            if vertex == goal:
+                return path
+            visited.add(vertex)
+            for neighbor in list(graph[vertex]):
+                if neighbor not in visited:
+                    stack.append((neighbor, path + [neighbor]))
+    return None
+
+def bfs_path(graph, start, goal):
+    try:
+        return nx.shortest_path(graph, source=start, target=goal)
+    except nx.NetworkXNoPath:
+        return None
+
+# --- 3. Функція малювання ---
+def draw_path(G, path, title, ax):
+    pos = nx.spring_layout(G, seed=42) # Фіксуємо позиції
+    
+    # Малюємо весь граф сірим
+    nx.draw_networkx_nodes(G, pos, node_size=300, node_color='lightgrey', ax=ax)
+    nx.draw_networkx_edges(G, pos, edge_color='lightgrey', ax=ax)
+    nx.draw_networkx_labels(G, pos, font_size=8, ax=ax)
+
+    # Якщо шлях знайдено - виділяємо його
+    if path:
+        # Виділяємо вузли шляху
+        nx.draw_networkx_nodes(G, pos, nodelist=path, node_color='orange', node_size=400, ax=ax)
+        
+        # Створюємо список ребер шляху для виділення
+        path_edges = list(zip(path, path[1:]))
+        nx.draw_networkx_edges(G, pos, edgelist=path_edges, edge_color='red', width=2, ax=ax)
+
+    ax.set_title(title)
+    ax.axis('off')
+
+# --- Головний блок ---
+G = create_metro_graph()
+start = "Лісова"
+end = "Теремки"
+
+path_dfs = dfs_result = dfs_path(G, start, end)
+path_bfs = bfs_result = bfs_path(G, start, end)
+
+# Створюємо картинку з двома графіками
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 7))
+
+draw_path(G, path_dfs, f"DFS Шлях (Глибина)\nКроків: {len(path_dfs)-1}", ax1)
+draw_path(G, path_bfs, f"BFS Шлях (Ширина)\nКроків: {len(path_bfs)-1}", ax2)
+
+plt.show()
